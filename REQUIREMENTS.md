@@ -229,3 +229,7 @@ Scenario: JSON is valid and parseable
 | T-06 | Localisation support (French, Spanish, Japanese input) | Low |
 | T-07 | REST API endpoint (`FastAPI`) to expose scoring engine | Low |
 | T-08 | User authentication and session persistence | Low |
+
+
+## 5. Planning Evidence
+![Jira Kanban Planning](docs/screenshots/jira_kanban_stage1.png)
