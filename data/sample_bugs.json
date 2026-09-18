@@ -1,0 +1,269 @@
+[
+  {
+    "id": "BUG-001",
+    "label": "✅ Complete – Login Token Expiry (Good)",
+    "summary": "Session token expires immediately after login on Safari 16 macOS Ventura",
+    "description": "After a successful login on Safari 16.x running on macOS 13.x (Ventura), the session token is invalidated within 2–3 seconds, forcing the user back to the login screen. The issue is not reproducible on Chrome 114 or Firefox 113 on the same machine.",
+    "steps_to_reproduce": [
+      "1. Open Safari 16.x on macOS 13.x Ventura.",
+      "2. Navigate to https://app.example.com/login.",
+      "3. Enter valid credentials (email: test@example.com, password: Test@1234).",
+      "4. Click the 'Sign In' button.",
+      "5. Observe the dashboard briefly loads, then redirects back to the login screen."
+    ],
+    "expected_result": "User should remain logged in and the dashboard should be accessible for the duration of the session (default: 30 minutes of inactivity).",
+    "actual_result": "The session is terminated approximately 2–3 seconds after login. The browser console shows: 'TokenExpiredError: jwt expired at 2024-05-10T08:01:02.000Z'.",
+    "environment": {
+      "os": "macOS 13.3 Ventura",
+      "browser": "Safari 16.4.1",
+      "app_version": "v2.7.3",
+      "backend": "Node.js 18.x / Express 4.x",
+      "database": "PostgreSQL 15"
+    },
+    "severity": "Critical",
+    "priority": "P1",
+    "reporter": "qa_engineer_1",
+    "attachments": ["console_log.txt", "screen_recording.mp4"]
+  },
+  {
+    "id": "BUG-002",
+    "label": "✅ Complete – Cart Total Miscalculation (Good)",
+    "summary": "Discount coupon applied twice when navigating back to cart after checkout",
+    "description": "When a user applies a valid 10% discount coupon on the cart page, proceeds to the checkout page, and then navigates back to the cart via the browser's back button, the coupon discount is applied a second time, resulting in an incorrect (double-discounted) total.",
+    "steps_to_reproduce": [
+      "1. Log in as a registered user.",
+      "2. Add any product (e.g., 'Wireless Mouse – SKU: WM-001') to the cart.",
+      "3. Navigate to the cart page at /cart.",
+      "4. Apply coupon code 'SAVE10' in the coupon field and click 'Apply'.",
+      "5. Verify the 10% discount is applied correctly.",
+      "6. Click 'Proceed to Checkout'.",
+      "7. On the checkout page, click the browser's back button to return to /cart.",
+      "8. Observe the displayed cart total."
+    ],
+    "expected_result": "Cart total should remain correctly discounted at 10% (original price × 0.90).",
+    "actual_result": "Cart total shows 19% additional discount applied (approximately 10% × 10% compounded), resulting in roughly 81% of original price instead of 90%.",
+    "environment": {
+      "os": "Windows 11 22H2",
+      "browser": "Chrome 114.0.5735.198",
+      "app_version": "v3.1.0",
+      "backend": "Django 4.2 / Python 3.11",
+      "database": "MySQL 8.0"
+    },
+    "severity": "High",
+    "priority": "P2",
+    "reporter": "qa_engineer_2",
+    "attachments": ["cart_before.png", "cart_after_back.png"]
+  },
+  {
+    "id": "BUG-003",
+    "label": "⚠️ Borderline – Upload Fails (Missing Env)",
+    "summary": "File upload fails for PDFs larger than 5MB",
+    "description": "When trying to upload a PDF file that is larger than 5MB in size, the upload fails with a generic error message. Smaller PDFs upload fine.",
+    "steps_to_reproduce": [
+      "1. Log in to the application.",
+      "2. Navigate to the 'Documents' section.",
+      "3. Click 'Upload File'.",
+      "4. Select a PDF file larger than 5MB.",
+      "5. Click 'Upload'.",
+      "6. Observe the error."
+    ],
+    "expected_result": "File should upload successfully. The application documentation states a 20MB file size limit.",
+    "actual_result": "Upload fails with the message: 'Upload failed. Please try again.' No further details are provided.",
+    "environment": {},
+    "severity": "High",
+    "priority": "P2",
+    "reporter": "qa_engineer_3",
+    "attachments": []
+  },
+  {
+    "id": "BUG-004",
+    "label": "⚠️ Borderline – Search Slow (No Repro Steps)",
+    "summary": "Search results take very long to load",
+    "description": "Sometimes the search feature is very slow. It takes a long time to show results. This does not always happen but is noticeable when searching for things with lots of results.",
+    "steps_to_reproduce": [],
+    "expected_result": "Search results should load within 2 seconds as per the SLA.",
+    "actual_result": "Search results sometimes take 15–30 seconds to load.",
+    "environment": {
+      "browser": "Firefox 113",
+      "app_version": "v3.0.1"
+    },
+    "severity": "Medium",
+    "priority": "P3",
+    "reporter": "developer_1",
+    "attachments": []
+  },
+  {
+    "id": "BUG-005",
+    "label": "❌ Poor – Dark Mode Broken (Vague)",
+    "summary": "Dark mode doesn't work",
+    "description": "Dark mode is broken. When you turn it on nothing changes or it looks weird. Please fix.",
+    "steps_to_reproduce": [],
+    "expected_result": "",
+    "actual_result": "It doesn't work.",
+    "environment": {},
+    "severity": "Low",
+    "priority": "P4",
+    "reporter": "end_user_1",
+    "attachments": []
+  },
+  {
+    "id": "BUG-006",
+    "label": "❌ Poor – App Crashes (No Detail)",
+    "summary": "App crashes",
+    "description": "The app crashes sometimes when I use it.",
+    "steps_to_reproduce": [],
+    "expected_result": "",
+    "actual_result": "App crashes.",
+    "environment": {},
+    "severity": "Critical",
+    "priority": "P1",
+    "reporter": "end_user_2",
+    "attachments": []
+  },
+  {
+    "id": "BUG-007",
+    "label": "⚠️ Borderline – Password Reset Email Delay (Missing Expected)",
+    "summary": "Password reset email not received promptly",
+    "description": "After requesting a password reset, the email sometimes arrives with a significant delay or not at all. The issue appears intermittent.",
+    "steps_to_reproduce": [
+      "1. Navigate to the login page.",
+      "2. Click 'Forgot Password'.",
+      "3. Enter a registered email address.",
+      "4. Click 'Send Reset Link'.",
+      "5. Check the inbox for the reset email."
+    ],
+    "expected_result": "",
+    "actual_result": "Reset email sometimes arrives after 10–15 minutes or not at all. No error is shown on the UI.",
+    "environment": {
+      "os": "Ubuntu 22.04",
+      "browser": "Chrome 114",
+      "app_version": "v2.9.0"
+    },
+    "severity": "High",
+    "priority": "P2",
+    "reporter": "qa_engineer_4",
+    "attachments": []
+  },
+  {
+    "id": "BUG-008",
+    "label": "✅ Complete – Report Export CSV Encoding (Good)",
+    "summary": "Exported CSV report contains garbled characters for non-ASCII data (UTF-8 encoding issue)",
+    "description": "When exporting a report that contains non-ASCII characters (e.g., Japanese Kanji, accented French characters) to CSV, the exported file displays garbled characters (mojibake) when opened in Microsoft Excel on Windows. The file opens correctly in LibreOffice Calc and in text editors that allow specifying UTF-8 encoding.",
+    "steps_to_reproduce": [
+      "1. Log in as an admin user.",
+      "2. Navigate to Reports > Sales Report.",
+      "3. Ensure the report contains at least one entry with non-ASCII characters (e.g., a product named '東京製品').",
+      "4. Click 'Export to CSV'.",
+      "5. Save the file to your desktop.",
+      "6. Open the downloaded CSV file using Microsoft Excel (Office 365, Windows 11).",
+      "7. Observe the characters in the affected column."
+    ],
+    "expected_result": "Non-ASCII characters should render correctly in the exported CSV file when opened in Microsoft Excel. The file should be exported with a UTF-8 BOM (Byte Order Mark) to ensure Excel correctly identifies the encoding.",
+    "actual_result": "Characters are displayed as garbled symbols, e.g., '東京製品' appears as 'æ±äº¬è£½å\u201d. The file is exported as plain UTF-8 without a BOM.",
+    "environment": {
+      "os": "Windows 11 22H2",
+      "office_version": "Microsoft Excel 365 (v2305)",
+      "browser": "Chrome 114",
+      "app_version": "v3.1.2",
+      "backend": "Python 3.11 / Django 4.2"
+    },
+    "severity": "Medium",
+    "priority": "P3",
+    "reporter": "qa_engineer_5",
+    "attachments": ["garbled_export.csv", "correct_libreoffice_view.png"]
+  },
+  {
+    "id": "BUG-009",
+    "label": "❌ Poor – Button Color Wrong (Trivial & Vague)",
+    "summary": "Button color is wrong",
+    "description": "The button color looks wrong. It should be blue not green.",
+    "steps_to_reproduce": [],
+    "expected_result": "Button should be blue.",
+    "actual_result": "Button is green.",
+    "environment": {},
+    "severity": "Low",
+    "priority": "P4",
+    "reporter": "end_user_3",
+    "attachments": []
+  },
+  {
+    "id": "BUG-010",
+    "label": "⚠️ Borderline – Notification Badge Count (Missing Actual Result)",
+    "summary": "Notification badge count incorrect after bulk-marking notifications as read",
+    "description": "After using the 'Mark All as Read' feature in the notification panel, the badge counter on the notification bell icon does not reset to zero. The badge persists until the page is manually refreshed.",
+    "steps_to_reproduce": [
+      "1. Log in with an account that has 5 or more unread notifications.",
+      "2. Click the notification bell icon in the top navigation bar.",
+      "3. In the notification panel, click 'Mark All as Read'.",
+      "4. Close the notification panel.",
+      "5. Observe the notification badge on the bell icon."
+    ],
+    "expected_result": "The notification badge should disappear or display '0' immediately after 'Mark All as Read' is clicked, without requiring a page refresh.",
+    "actual_result": "",
+    "environment": {
+      "os": "Windows 10 21H2",
+      "browser": "Edge 114",
+      "app_version": "v3.0.5"
+    },
+    "severity": "Low",
+    "priority": "P4",
+    "reporter": "qa_engineer_6",
+    "attachments": []
+  },
+  {
+    "id": "BUG-011",
+    "label": "⚠️ Borderline – 2FA SMS Not Received (Missing Severity)",
+    "summary": "Two-factor authentication SMS code not delivered to international phone numbers",
+    "description": "Users with phone numbers from certain countries (confirmed: India +91, Brazil +55, Nigeria +234) do not receive the SMS OTP for two-factor authentication. Domestic US numbers (+1) work correctly.",
+    "steps_to_reproduce": [
+      "1. Register or update account with a phone number using country code +91 (India).",
+      "2. Enable Two-Factor Authentication (2FA) via SMS in Account Settings.",
+      "3. Log out of the application.",
+      "4. Log back in with valid credentials.",
+      "5. Wait for the SMS OTP to arrive on the registered phone.",
+      "6. Observe that no SMS is received after 5+ minutes."
+    ],
+    "expected_result": "SMS OTP should be delivered to all valid international phone numbers within 60 seconds.",
+    "actual_result": "No SMS is received for +91, +55, or +234 country codes. The UI shows 'Code sent!' but no message is delivered. Twilio logs show 'Error 30008: Unknown error'.",
+    "environment": {
+      "os": "Android 13 / Pixel 7",
+      "app_version": "v3.1.0",
+      "sms_provider": "Twilio",
+      "affected_regions": ["India (+91)", "Brazil (+55)", "Nigeria (+234)"]
+    },
+    "severity": "",
+    "priority": "P1",
+    "reporter": "qa_engineer_7",
+    "attachments": ["twilio_error_log.txt"]
+  },
+  {
+    "id": "BUG-012",
+    "label": "✅ Complete – Data Grid Pagination (Good)",
+    "summary": "Data grid skips page 3 when navigating forward with 100-row page size on datasets > 250 rows",
+    "description": "When the user sets the data grid's page size to 100 rows per page and the total dataset contains more than 250 rows, navigating forward through pages causes page 3 to be skipped entirely. Clicking 'Next' on page 2 jumps directly to page 4. This results in rows 201–300 never being displayed.",
+    "steps_to_reproduce": [
+      "1. Log in as admin.",
+      "2. Navigate to Admin > User Management.",
+      "3. Ensure there are at least 301 user records (create dummy users if necessary).",
+      "4. Set the page size selector to '100 rows per page'.",
+      "5. Verify page 1 shows rows 1–100.",
+      "6. Click 'Next Page' to navigate to page 2 (rows 101–200).",
+      "7. Click 'Next Page' again.",
+      "8. Observe which page/rows are displayed."
+    ],
+    "expected_result": "Page 3 should display rows 201–300 when 'Next Page' is clicked from page 2 with a 100-row page size.",
+    "actual_result": "Navigating from page 2 skips to page 4 (rows 301–400). Page 3 (rows 201–300) is inaccessible via the 'Next' button. Directly entering '3' in the page number input also results in page 4 being displayed.",
+    "environment": {
+      "os": "Ubuntu 22.04 LTS",
+      "browser": "Chrome 114.0.5735.198",
+      "app_version": "v3.1.1",
+      "backend": "FastAPI 0.100 / Python 3.11",
+      "database": "PostgreSQL 15.2",
+      "dataset_size": "350 records"
+    },
+    "severity": "High",
+    "priority": "P2",
+    "reporter": "qa_engineer_8",
+    "attachments": ["pagination_video.mp4", "network_requests.har"]
+  }
+]
