@@ -232,4 +232,9 @@ Scenario: JSON is valid and parseable
 
 
 ## 5. Planning Evidence
+**Jira Kanban Planning**
+Stage 1:
 ![Jira Kanban Planning](docs/screenshots/jira_kanban_stage1.png)
+
+Stage 2:
+![Jira Kanban Planning](docs/screenshots/jira_kanban_stage2.png)
