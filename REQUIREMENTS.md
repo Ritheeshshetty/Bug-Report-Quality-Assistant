@@ -238,3 +238,12 @@ Stage 1:
 
 Stage 2:
 ![Jira Kanban Planning](docs/screenshots/jira_kanban_stage2.png)
+
+Stage 3A:
+![Jira Kanban Planning](docs/screenshots/jira_kanban_stage3A.png)
+
+Stage 3B:
+![Jira Kanban Planning](docs/screenshots/jira_kanban_stage3B.png)  
+
+Stage 3C:
+![Jira Kanban Planning](docs/screenshots/jira_kanban_stage3C.png)
