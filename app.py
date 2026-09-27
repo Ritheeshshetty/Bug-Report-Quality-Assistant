@@ -423,18 +423,18 @@ def parse_bug_from_text(raw_text: str, bug_id: str = "CUSTOM-001") -> BugReport:
             continue
 
         # ── Markdown heading OR bare "Field:" header (content on NEXT line) ──
-        header_match = re.match(r"^#{1,3}\s*(.+)$|^([A-Za-z ()]+)\s*:\s*$", stripped)
+        # Also matches bare known keywords alone on a line (e.g. just "Summary")
+        header_match = re.match(r"^#{1,3}\s*(.+)$|^([A-Za-z ()]+)\s*:?\s*$", stripped)
         if header_match:
             detected = (header_match.group(1) or header_match.group(2) or "").strip().lower()
-            for key, mapped in section_map.items():
-                if key == detected:
-                    flush(current_section, buffer)
-                    current_section = mapped
-                    buffer = []
-                    break
-            else:
-                buffer.append(line)
-            continue
+            # Only treat as a section header if detected text is a known keyword.
+            # This prevents random words / short content from being misread as headers.
+            if detected in section_map:
+                flush(current_section, buffer)
+                current_section = section_map[detected]
+                buffer = []
+                continue
+            # Not a known keyword — fall through to buffer
 
         # ── Inline "Field: value" — ALL known section_map keys ───────────────
         inline_match = _inline_re.match(stripped)
@@ -589,8 +589,12 @@ def _val(text: str, mono: bool = False) -> str:
 def _steps_html(steps: List[str]) -> str:
     if not steps:
         return '<span class="empty-field">(not provided)</span>'
+    # Strip any leading number prefix (e.g. "1.", "1)", "1 -", "1 ")
+    # so the <ol> list numbering doesn't double up with numbers in the text.
+    _num_prefix = re.compile(r"^\s*\d+[.):\-]?\s*")
+    cleaned = [_num_prefix.sub("", s).strip() for s in steps]
     items = "".join(
-        f'<li style="margin-bottom:0.3rem; color:#c9d1d9;">{s}</li>' for s in steps
+        f'<li style="margin-bottom:0.3rem; color:#c9d1d9;">{s}</li>' for s in cleaned
     )
     return f'<ol style="margin:0; padding-left:1.2rem; font-size:0.87rem;">{items}</ol>'
 
@@ -855,12 +859,47 @@ Priority: P2"""
             height=280,
             help=(
                 "Accepted formats:\n"
-                "• Free-form text with labelled sections (Summary:, Description:, …)\n"
-                "• JSON object with fields matching the BugReport schema "
-                "(id, summary, description, steps_to_reproduce, expected_result, "
-                "actual_result, environment, severity, priority)"
+                "• Free-form text with labelled sections (see format guide below)\n"
+                "• JSON object with fields: id, summary, description, "
+                "steps_to_reproduce, expected_result, actual_result, "
+                "environment, severity, priority"
             )
         )
+
+        # ── Format convention guide ───────────────────────────────────────────
+        with st.expander("📋 Input format guide", expanded=False):
+            st.markdown("""
+**Recognised field names** (case-insensitive):
+
+| Field | Accepted labels |
+|---|---|
+| Summary | `Summary`, `Title`, `Headline` |
+| Description | `Description`, `Details`, `Body` |
+| Steps | `Steps to Reproduce`, `Steps`, `Reproduction Steps`, `How to Reproduce` |
+| Expected | `Expected Result`, `Expected`, `Expected Behavior` |
+| Actual | `Actual Result`, `Actual`, `Actual Behavior`, `Observed` |
+| Environment | `Environment`, `Env` |
+| Severity | `Severity` |
+| Priority | `Priority` |
+
+**Three ways to write each field — all work:**
+
+```
+# Option 1 — field and value on the same line (colon required)
+Summary: Search results take too long to load
+
+# Option 2 — field name alone on its own line, content below
+Summary:
+Search results take too long to load
+
+# Option 3 — bare keyword on its own line (colon optional)
+Summary
+Search results take too long to load
+```
+
+> **Tip:** For multi-line content (like Steps), use one step per line. \
+> JSON input is also accepted — paste the full object and it is detected automatically.
+            """)
         custom_id = st.text_input(
             "Bug ID (used only when JSON has no id field):", value="CUSTOM-001", max_chars=30
         )
@@ -1011,7 +1050,7 @@ Priority: P2"""
         "<div style='text-align:center; color:#484f58; font-size:0.75rem; "
         "border-top: 1px solid #21262d; padding-top:1rem;'>"
         "Bug Report Quality Assistant · ISTQB CTFL v4.0.1 §5.5 · "
-        "IGS Engineering Quality Fresher Hackathon 2024 · "
+        "IGS Engineering Quality Fresher Hackathon 2026 · "
         "Built with Streamlit &amp; Pydantic v2"
         "</div>",
         unsafe_allow_html=True
