@@ -247,18 +247,111 @@ SAMPLE_BUGS = load_sample_bugs()
 
 
 def parse_bug_from_dict(data: Dict[str, Any]) -> BugReport:
-    return BugReport(**data)
+    """
+    Normalise common JSON field aliases before constructing a BugReport.
+    This makes the JSON input format lenient — users can use 'title', 'steps',
+    'expected', 'actual', etc. and they will be mapped to the correct field names.
+    Unknown keys are silently dropped to prevent Pydantic validation errors.
+    """
+    # Mapping: alias (lower-cased) → canonical BugReport field name
+    _ALIAS: Dict[str, str] = {
+        # id
+        "bug_id": "id",
+        "defect_id": "id",
+        "ticket_id": "id",
+        # summary
+        "title": "summary",
+        "headline": "summary",
+        "subject": "summary",
+        "short_description": "summary",
+        # description
+        "details": "description",
+        "body": "description",
+        "narrative": "description",
+        "detail": "description",
+        # steps_to_reproduce
+        "steps": "steps_to_reproduce",
+        "reproduction_steps": "steps_to_reproduce",
+        "steps_to_reproduce": "steps_to_reproduce",
+        "how_to_reproduce": "steps_to_reproduce",
+        "repro_steps": "steps_to_reproduce",
+        # expected_result
+        "expected": "expected_result",
+        "expected_behavior": "expected_result",
+        "expected_results": "expected_result",
+        # actual_result
+        "actual": "actual_result",
+        "actual_behavior": "actual_result",
+        "actual_results": "actual_result",
+        "observed": "actual_result",
+        "observed_behavior": "actual_result",
+        # environment
+        "env": "environment",
+        "environment_details": "environment",
+        # severity / priority
+        "sev": "severity",
+        "pri": "priority",
+        "prio": "priority",
+        # reporter
+        "author": "reporter",
+        "reported_by": "reporter",
+        "submitter": "reporter",
+    }
+
+    # Known BugReport fields (to filter out unknown keys)
+    _KNOWN = {
+        "id", "label", "summary", "description", "steps_to_reproduce",
+        "expected_result", "actual_result", "environment",
+        "severity", "priority", "reporter", "attachments",
+    }
+
+    normalised: Dict[str, Any] = {}
+    for raw_key, value in data.items():
+        canonical = _ALIAS.get(raw_key.lower().strip(), raw_key.lower().strip())
+        if canonical in _KNOWN:
+            normalised[canonical] = value
+        # else: silently drop unknown keys
+
+    # Ensure steps_to_reproduce is always a list
+    steps = normalised.get("steps_to_reproduce")
+    if isinstance(steps, str):
+        # Handle comma-separated or newline-separated strings
+        if "\n" in steps:
+            normalised["steps_to_reproduce"] = [s.strip() for s in steps.splitlines() if s.strip()]
+        else:
+            normalised["steps_to_reproduce"] = [s.strip() for s in steps.split(",") if s.strip()]
+
+    return BugReport(**normalised)
 
 
 def parse_bug_from_text(raw_text: str, bug_id: str = "CUSTOM-001") -> BugReport:
     """
     Best-effort parser to extract fields from free-form text input.
 
-    Handles both:
+    Handles three formats:
+      - JSON object: parsed directly via parse_bug_from_dict.
       - Block format:  "Field:\\n<content on next lines>"
       - Inline format: "Field: <content on same line>" for ALL known fields,
         including multi-word keys like "Steps to Reproduce", "Expected Result", etc.
     """
+    # ── JSON detection ────────────────────────────────────────────────────────
+    stripped_input = raw_text.strip()
+    if stripped_input.startswith("{") and stripped_input.endswith("}"):
+        try:
+            data = json.loads(stripped_input)
+            if isinstance(data, dict):
+                # ── Detect full export payload (has original_report key) ──────
+                # When the user pastes the JSON exported by this tool, unwrap
+                # the original_report section and use that as the bug report.
+                if "original_report" in data and isinstance(data["original_report"], dict):
+                    data = data["original_report"]
+
+                # Inject the custom bug_id only if no id/bug_id is present
+                if "id" not in data and "bug_id" not in data:
+                    data["id"] = bug_id
+                return parse_bug_from_dict(data)
+        except json.JSONDecodeError:
+            pass  # Not valid JSON — fall through to text parser
     lines = raw_text.strip().splitlines()
     fields: Dict[str, Any] = {
         "id": bug_id,
@@ -757,23 +850,63 @@ Severity: High
 Priority: P2"""
 
         custom_text = st.text_area(
-            "Paste your bug report (free-form or structured):",
+            "Paste your bug report (free-form, structured, or JSON):",
             value=placeholder,
             height=280,
-            help="Supported sections: Summary, Description, Steps to Reproduce, "
-                 "Expected Result, Actual Result, Environment, Severity, Priority."
+            help=(
+                "Accepted formats:\n"
+                "• Free-form text with labelled sections (Summary:, Description:, …)\n"
+                "• JSON object with fields matching the BugReport schema "
+                "(id, summary, description, steps_to_reproduce, expected_result, "
+                "actual_result, environment, severity, priority)"
+            )
         )
         custom_id = st.text_input(
-            "Bug ID:", value="CUSTOM-001", max_chars=30
+            "Bug ID (used only when JSON has no id field):", value="CUSTOM-001", max_chars=30
         )
+
         if not custom_text.strip():
             st.info("Enter a bug report above to analyse it.")
             return
+
+        # Show a hint when the user appears to have pasted JSON
+        stripped = custom_text.strip()
+        if stripped.startswith("{") and stripped.endswith("}"):
+            try:
+                parsed_json = json.loads(stripped)
+                if isinstance(parsed_json, dict) and "original_report" in parsed_json:
+                    st.success(
+                        "✅ Export payload detected — extracting `original_report` "
+                        "and re-analysing it fresh."
+                    )
+                else:
+                    st.success("✅ Valid JSON detected — parsing as structured bug report.")
+            except json.JSONDecodeError:
+                st.warning("⚠️ Input looks like JSON but is not valid. Check for syntax errors.")
+
         try:
             bug = parse_bug_from_text(custom_text, bug_id=custom_id)
         except Exception as e:
             st.error(f"Failed to parse custom report: {e}")
             return
+
+        # Show parsed fields so user can verify extraction
+        with st.expander("🔍 Parsed fields preview (verify before analysing)", expanded=False):
+            st.json({
+                "id": bug.id,
+                "summary": bug.summary or "(empty)",
+                "description": bug.description or "(empty)",
+                "steps_to_reproduce": bug.steps_to_reproduce or [],
+                "expected_result": bug.expected_result or "(empty)",
+                "actual_result": bug.actual_result or "(empty)",
+                "environment": (
+                    bug.environment.model_dump(exclude_none=True)
+                    if hasattr(bug.environment, "model_dump")
+                    else bug.environment
+                ),
+                "severity": bug.severity or "(empty)",
+                "priority": bug.priority or "(empty)",
+            })
 
     # ── Action Button ─────────────────────────────────────────────────────────
     st.markdown("<br>", unsafe_allow_html=True)
