@@ -5,7 +5,7 @@
 [![ISTQB CTFL v4.0.1](https://img.shields.io/badge/ISTQB-CTFL%20v4.0.1-green.svg)](https://www.istqb.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **IGS Engineering Quality Fresher Hackathon 2024**  
+> **IGS Engineering Quality Fresher Hackathon 2026**  
 > A production-ready, lightweight web application that scores, alerts, and rewrites bug reports according to **ISTQB CTFL v4.0.1 §5.5** defect management standards.
 
 ---
