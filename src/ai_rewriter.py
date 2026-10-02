@@ -2,15 +2,17 @@
 src/ai_rewriter.py
 Bug report rewriter for Bug Report Quality Assistant.
 
-Strategy:
-  1. PRIMARY – OpenAI GPT-4o via the openai SDK (requires OPENAI_API_KEY env var).
-  2. FALLBACK – Deterministic rule-based rewriter that always works offline.
+Strategy (tried in order):
+  1. PRIMARY  – Groq Llama-3.1-70B (requires GROQ_API_KEY env var, free tier available).
+  2. SECONDARY – OpenAI GPT-4o via the openai SDK (requires OPENAI_API_KEY env var).
+  3. FALLBACK  – Deterministic rule-based rewriter that always works offline.
 
 The module auto-detects which strategy to use:
-  - If OPENAI_API_KEY is set and the openai package is installed → AI mode.
+  - If GROQ_API_KEY is set and the groq package is installed → Groq AI mode.
+  - Else if OPENAI_API_KEY is set and openai is installed → OpenAI mode.
   - Otherwise → rule-based fallback (no API calls, no external network).
 
-Both strategies return a `RewrittenBug` with the same schema so callers
+Both AI strategies return a `RewrittenBug` with the same schema so callers
 are completely decoupled from the rewrite source.
 """
 
@@ -69,8 +71,84 @@ Guidelines:
 """).strip()
 
 
+def _build_user_message(bug: BugReport) -> str:
+    return json.dumps({
+        "id": bug.id,
+        "summary": bug.summary,
+        "description": bug.description,
+        "steps_to_reproduce": bug.steps_to_reproduce,
+        "expected_result": bug.expected_result,
+        "actual_result": bug.actual_result,
+        "environment": bug.environment if isinstance(bug.environment, dict)
+                       else bug.environment.model_dump(exclude_none=True),
+        "severity": bug.severity,
+        "priority": bug.priority,
+    }, indent=2)
+
+
+def _parse_ai_response(bug: BugReport, raw: str) -> RewrittenBug:
+    """Parse a JSON string from any AI backend into a RewrittenBug."""
+    data = json.loads(raw)
+    env_data = data.get("environment", {})
+    env = Environment.from_dict(env_data) if isinstance(env_data, dict) else Environment()
+    return RewrittenBug(
+        original_id=bug.id,
+        summary=data.get("summary", bug.summary),
+        description=data.get("description", bug.description),
+        steps_to_reproduce=data.get("steps_to_reproduce", bug.steps_to_reproduce),
+        expected_result=data.get("expected_result", bug.expected_result),
+        actual_result=data.get("actual_result", bug.actual_result),
+        environment=env,
+        severity=data.get("severity", bug.severity or "Medium"),
+        priority=data.get("priority", bug.priority or "P3"),
+        rewrite_source=RewriteSource.AI,
+        improvements_made=data.get("improvements_made", []),
+        confidence_score=0.95,
+    )
+
+
 # ---------------------------------------------------------------------------
-# AI Rewriter (OpenAI GPT-4o)
+# AI Rewriter — Groq (primary, free tier)
+# ---------------------------------------------------------------------------
+
+def _rewrite_with_groq(bug: BugReport) -> Optional[RewrittenBug]:
+    """
+    Attempt to rewrite using Groq's Llama-3.1-70B-Versatile.
+    Returns None if groq SDK is unavailable or the API call fails.
+    Get a free key at: https://console.groq.com/keys
+    """
+    try:
+        from groq import Groq  # type: ignore
+    except ImportError:
+        logger.debug("groq package not installed; skipping Groq rewrite.")
+        return None
+
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
+    if not api_key:
+        logger.debug("GROQ_API_KEY not set; skipping Groq rewrite.")
+        return None
+
+    client = Groq(api_key=api_key)
+    try:
+        response = client.chat.completions.create(
+            model="qwen/qwen3.8-27b",
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": _build_user_message(bug)},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.2,
+            max_tokens=1200,
+        )
+        raw = response.choices[0].message.content or "{}"
+        return _parse_ai_response(bug, raw)
+    except Exception as exc:
+        logger.warning("Groq AI rewrite failed: %s", exc)
+        return None
+
+
+# ---------------------------------------------------------------------------
+# AI Rewriter — OpenAI GPT-4o (secondary)
 # ---------------------------------------------------------------------------
 
 def _rewrite_with_ai(bug: BugReport) -> Optional[RewrittenBug]:
@@ -90,51 +168,19 @@ def _rewrite_with_ai(bug: BugReport) -> Optional[RewrittenBug]:
         return None
 
     client = openai.OpenAI(api_key=api_key)
-
-    user_message = json.dumps({
-        "id": bug.id,
-        "summary": bug.summary,
-        "description": bug.description,
-        "steps_to_reproduce": bug.steps_to_reproduce,
-        "expected_result": bug.expected_result,
-        "actual_result": bug.actual_result,
-        "environment": bug.environment if isinstance(bug.environment, dict)
-                       else bug.environment.model_dump(exclude_none=True),
-        "severity": bug.severity,
-        "priority": bug.priority,
-    }, indent=2)
-
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
+                {"role": "user", "content": _build_user_message(bug)},
             ],
             response_format={"type": "json_object"},
             temperature=0.2,
             max_tokens=1200,
         )
         raw = response.choices[0].message.content or "{}"
-        data = json.loads(raw)
-
-        env_data = data.get("environment", {})
-        env = Environment.from_dict(env_data) if isinstance(env_data, dict) else Environment()
-
-        return RewrittenBug(
-            original_id=bug.id,
-            summary=data.get("summary", bug.summary),
-            description=data.get("description", bug.description),
-            steps_to_reproduce=data.get("steps_to_reproduce", bug.steps_to_reproduce),
-            expected_result=data.get("expected_result", bug.expected_result),
-            actual_result=data.get("actual_result", bug.actual_result),
-            environment=env,
-            severity=data.get("severity", bug.severity or "Medium"),
-            priority=data.get("priority", bug.priority or "P3"),
-            rewrite_source=RewriteSource.AI,
-            improvements_made=data.get("improvements_made", []),
-            confidence_score=0.95,
-        )
+        return _parse_ai_response(bug, raw)
     except Exception as exc:
         logger.warning("AI rewrite failed: %s", exc)
         return None
@@ -353,26 +399,48 @@ def _detect_vague_language_in_bug(bug: BugReport) -> List[str]:
 _rule_based = _RuleBasedRewriter()
 
 
-def rewrite_bug_report(bug: BugReport) -> RewrittenBug:
+def rewrite_bug_report(bug: BugReport, mode: str = "🚀 Auto-Detect") -> RewrittenBug:
     """
     Rewrite a bug report into ISTQB CTFL v4.0.1 §5.5 format.
 
-    Attempts AI rewrite first (GPT-4o via OpenAI SDK); automatically
-    falls back to the deterministic rule-based rewriter if:
-      - openai package is not installed
-      - OPENAI_API_KEY environment variable is not set
-      - The API call fails for any reason
+    mode options (match sidebar radio labels):
+      "🚀 Auto-Detect"   — tries Groq → OpenAI → Rule-Based
+      "🟣 Groq AI (Free)" — Groq first, falls back to Rule-Based if unavailable
+      "🔵 OpenAI GPT-4o" — OpenAI first, falls back to Rule-Based if unavailable
+      "⚙️ Rule-Based"    — skip all AI, always use rule-based
+      "📴 Offline Only"  — same as Rule-Based, no network calls ever
 
     Args:
-        bug: Input BugReport (can be vague / incomplete).
+        bug:  Input BugReport (can be vague / incomplete).
+        mode: Rewrite strategy chosen in the sidebar.
 
     Returns:
         RewrittenBug with `rewrite_source` indicating which path was used.
     """
-    ai_result = _rewrite_with_ai(bug)
-    if ai_result is not None:
-        logger.info("Bug %s rewritten using AI (GPT-4o).", bug.id)
-        return ai_result
+    # ── Offline / Rule-Based forced modes ─────────────────────────────────
+    if mode in ("⚙️ Rule-Based", "📴 Offline Only"):
+        logger.info("Bug %s rewritten using rule-based (mode=%s).", bug.id, mode)
+        return _rule_based.rewrite(bug)
 
+    # ── Groq-first modes ──────────────────────────────────────────────────
+    if mode in ("🚀 Auto-Detect", "🟣 Groq AI (Free)"):
+        groq_result = _rewrite_with_groq(bug)
+        if groq_result is not None:
+            logger.info("Bug %s rewritten using Groq (Llama-3.1-70B).", bug.id)
+            return groq_result
+        if mode == "🟣 Groq AI (Free)":
+            logger.warning("Groq unavailable — falling back to rule-based.")
+            return _rule_based.rewrite(bug)
+
+    # ── OpenAI mode (or Auto-Detect fallback after Groq failed) ───────────
+    if mode in ("🚀 Auto-Detect", "🔵 OpenAI GPT-4o"):
+        ai_result = _rewrite_with_ai(bug)
+        if ai_result is not None:
+            logger.info("Bug %s rewritten using OpenAI GPT-4o.", bug.id)
+            return ai_result
+        if mode == "🔵 OpenAI GPT-4o":
+            logger.warning("OpenAI unavailable — falling back to rule-based.")
+
+    # ── Final fallback ─────────────────────────────────────────────────────
     logger.info("Bug %s rewritten using rule-based fallback.", bug.id)
     return _rule_based.rewrite(bug)

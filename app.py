@@ -66,6 +66,101 @@ st.markdown("""
   /* ── Global background ── */
   .stApp { background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); }
 
+  /* ── Top header / toolbar bar ── */
+  [data-testid="stHeader"],
+  [data-testid="stToolbar"],
+  header[data-testid="stHeader"],
+  .stApp > header,
+  .stAppHeader,
+  section[data-testid="stSidebarContent"] ~ div > header {
+    background-color: #0d1117 !important;
+    background: #0d1117 !important;
+    border-bottom: 1px solid #21262d !important;
+  }
+  /* Deploy button & toolbar icons */
+  [data-testid="stHeader"] button,
+  [data-testid="stToolbar"] button,
+  [data-testid="stDeployButton"],
+  [data-testid="stDeployButton"] button,
+  [data-testid="stHeader"] a,
+  [data-testid="baseButton-headerNoPadding"],
+  [data-testid="stStatusWidget"] {
+    color: #8b949e !important;
+    background-color: transparent !important;
+  }
+  [data-testid="stDeployButton"] button:hover,
+  [data-testid="stHeader"] button:hover {
+    color: #c9d1d9 !important;
+    background-color: rgba(255,255,255,0.05) !important;
+  }
+  /* Streamlit top-right menu (⋮) popover */
+  [data-testid="stMainMenu"] ul,
+  ul[data-testid="main-menu-list"] {
+    background-color: #1c2128 !important;
+    border: 1px solid #30363d !important;
+  }
+  [data-testid="stMainMenu"] li,
+  ul[data-testid="main-menu-list"] li {
+    color: #c9d1d9 !important;
+  }
+  [data-testid="stMainMenu"] li:hover,
+  ul[data-testid="main-menu-list"] li:hover {
+    background-color: rgba(88,166,255,0.1) !important;
+    color: #58a6ff !important;
+  }
+
+  /* ── BaseWeb dropdown / listbox portal (selectbox options) ── */
+  /* These render in a portal at the body root, outside .stApp */
+  [role="listbox"],
+  [role="option"],
+  ul[role="listbox"],
+  li[role="option"] {
+    background-color: #1c2128 !important;
+    color: #c9d1d9 !important;
+  }
+  li[role="option"]:hover,
+  li[role="option"][aria-selected="true"] {
+    background-color: rgba(88,166,255,0.15) !important;
+    color: #58a6ff !important;
+  }
+  /* BaseWeb popover container */
+  [data-baseweb="popover"],
+  div[data-baseweb="popover"] > div,
+  div[data-baseweb="select-dropdown"],
+  [data-baseweb="menu"] {
+    background-color: #1c2128 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+  }
+  /* Every item inside BaseWeb menu */
+  [data-baseweb="menu"] [role="option"],
+  [data-baseweb="menu"] li,
+  [data-baseweb="menu"] [data-baseweb="menu-item"] {
+    background-color: #1c2128 !important;
+    color: #c9d1d9 !important;
+  }
+  [data-baseweb="menu"] [role="option"]:hover,
+  [data-baseweb="menu"] li:hover,
+  [data-baseweb="menu"] [data-baseweb="menu-item"]:hover,
+  [data-baseweb="menu"] [aria-selected="true"] {
+    background-color: rgba(88,166,255,0.15) !important;
+    color: #58a6ff !important;
+  }
+  /* Catch-all: any white card/surface that appears during interaction */
+  div[class*="Popover"],
+  div[class*="popover"],
+  div[class*="Dropdown"],
+  div[class*="dropdown"],
+  div[class*="Menu"],
+  div[class*="menu"] > ul,
+  div[class*="SelectMenu"],
+  div[class*="List"] > ul {
+    background-color: #1c2128 !important;
+    color: #c9d1d9 !important;
+    border-color: #30363d !important;
+  }
+
   /* ── Sidebar ── */
   [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
@@ -225,6 +320,214 @@ st.markdown("""
   .sidebar-metric-label { font-size: 0.72rem; color: #8b949e; text-transform: uppercase;
                           letter-spacing: 0.08em; }
   .sidebar-metric-value { font-size: 1.4rem; font-weight: 700; color: #c9d1d9; }
+
+  /* ── Force dark on ALL native Streamlit widgets ── */
+
+  /* General text & labels */
+  label, .stMarkdown, .stText, p, span, li { color: #c9d1d9; }
+
+  /* Selectbox / dropdown */
+  [data-testid="stSelectbox"] > div > div,
+  [data-testid="stSelectbox"] > div > div > div,
+  div[data-baseweb="select"] > div,
+  div[data-baseweb="select"] div[class*="ValueContainer"],
+  div[data-baseweb="select"] div[class*="singleValue"],
+  div[data-baseweb="select"] div[class*="placeholder"] {
+    background-color: #161b22 !important;
+    color: #c9d1d9 !important;
+    border-color: #30363d !important;
+  }
+  div[data-baseweb="select"] > div:focus-within,
+  div[data-baseweb="select"] > div:hover {
+    border-color: #58a6ff !important;
+  }
+  /* Dropdown popover list */
+  div[data-baseweb="popover"] ul,
+  div[data-baseweb="menu"],
+  div[data-baseweb="menu"] ul {
+    background-color: #1c2128 !important;
+    border: 1px solid #30363d !important;
+  }
+  div[data-baseweb="menu"] li,
+  div[data-baseweb="option"] {
+    color: #c9d1d9 !important;
+    background-color: #1c2128 !important;
+  }
+  div[data-baseweb="menu"] li:hover,
+  div[data-baseweb="option"]:hover {
+    background-color: rgba(88,166,255,0.12) !important;
+    color: #58a6ff !important;
+  }
+
+  /* Text area */
+  textarea,
+  [data-testid="stTextArea"] textarea {
+    background-color: #161b22 !important;
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 8px !important;
+  }
+  textarea:focus,
+  [data-testid="stTextArea"] textarea:focus {
+    border-color: #58a6ff !important;
+    box-shadow: 0 0 0 2px rgba(88,166,255,0.15) !important;
+  }
+
+  /* Text input */
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  [data-testid="stTextInput"] input,
+  [data-testid="stNumberInput"] input {
+    background-color: #161b22 !important;
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 8px !important;
+  }
+  [data-testid="stTextInput"] input:focus,
+  [data-testid="stNumberInput"] input:focus {
+    border-color: #58a6ff !important;
+    box-shadow: 0 0 0 2px rgba(88,166,255,0.15) !important;
+  }
+
+  /* Radio buttons */
+  [data-testid="stRadio"] label,
+  [data-testid="stRadio"] div { color: #c9d1d9 !important; }
+
+  /* Checkbox */
+  [data-testid="stCheckbox"] label { color: #c9d1d9 !important; }
+
+  /* Expander */
+  [data-testid="stExpander"] {
+    background-color: #161b22 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 8px !important;
+  }
+  [data-testid="stExpander"] summary,
+  [data-testid="stExpander"] summary span,
+  [data-testid="stExpander"] summary p {
+    color: #c9d1d9 !important;
+    background-color: #161b22 !important;
+  }
+  [data-testid="stExpander"] > div[data-testid="stVerticalBlock"] {
+    background-color: #161b22 !important;
+  }
+
+  /* Code / pre blocks — target every Streamlit code layer */
+  pre, code,
+  [data-testid="stCode"],
+  [data-testid="stCode"] > div,
+  [data-testid="stCode"] pre,
+  [data-testid="stCode"] code,
+  [data-testid="stCodeBlock"],
+  [data-testid="stCodeBlock"] > div,
+  [data-testid="stCodeBlock"] pre,
+  [data-testid="stCodeBlock"] code,
+  .stCode, .stCode > div, .stCode pre, .stCode code,
+  div[class*="stCode"] pre,
+  div[class*="stCode"] code {
+    background-color: #0d1117 !important;
+    background: #0d1117 !important;
+    color: #c9d1d9 !important;
+    border: 1px solid #21262d !important;
+    border-radius: 8px !important;
+  }
+  /* Copy button area inside code block */
+  [data-testid="stCode"] > div:first-child,
+  [data-testid="stCodeBlock"] > div:first-child {
+    background-color: #0d1117 !important;
+    border-bottom: 1px solid #21262d !important;
+  }
+
+  /* Text input — target all layers */
+  [data-testid="stTextInput"],
+  [data-testid="stTextInput"] > div,
+  [data-testid="stTextInput"] > div > div,
+  [data-baseweb="input"],
+  [data-baseweb="input"] > div,
+  [data-baseweb="base-input"],
+  input[type="text"],
+  input[type="number"],
+  input[type="password"] {
+    background-color: #161b22 !important;
+    background: #161b22 !important;
+    color: #c9d1d9 !important;
+    border-color: #30363d !important;
+    border-radius: 8px !important;
+  }
+  [data-baseweb="input"]:focus-within,
+  [data-baseweb="input"] > div:focus-within {
+    border-color: #58a6ff !important;
+    box-shadow: 0 0 0 2px rgba(88,166,255,0.15) !important;
+  }
+  input::placeholder { color: #6e7681 !important; }
+
+
+  /* st.info / st.success / st.warning / st.error callouts */
+  [data-testid="stAlert"] {
+    background-color: #161b22 !important;
+    border-color: #30363d !important;
+    color: #c9d1d9 !important;
+  }
+
+  /* Metric widget */
+  [data-testid="stMetric"] label { color: #8b949e !important; }
+  [data-testid="stMetric"] [data-testid="stMetricValue"] { color: #c9d1d9 !important; }
+  [data-testid="stMetric"] [data-testid="stMetricDelta"] { color: #34d399 !important; }
+
+  /* DataFrame / table */
+  [data-testid="stDataFrame"] table,
+  [data-testid="stDataFrame"] thead,
+  [data-testid="stDataFrame"] tbody,
+  [data-testid="stDataFrame"] th,
+  [data-testid="stDataFrame"] td {
+    background-color: #161b22 !important;
+    color: #c9d1d9 !important;
+    border-color: #30363d !important;
+  }
+  [data-testid="stDataFrame"] th { background-color: #1c2128 !important; color: #58a6ff !important; }
+
+  /* Buttons */
+  [data-testid="stButton"] > button {
+    background-color: #1c2128 !important;
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 8px !important;
+  }
+  [data-testid="stButton"] > button:hover {
+    border-color: #58a6ff !important;
+    color: #58a6ff !important;
+    background-color: rgba(88,166,255,0.08) !important;
+  }
+  [data-testid="stButton"] > button[kind="primary"] {
+    background: linear-gradient(135deg, #f97316, #ef4444) !important;
+    color: #fff !important; border: none !important;
+  }
+
+  /* Slider */
+  [data-testid="stSlider"] div[data-baseweb="slider"] div { background-color: #30363d !important; }
+  [data-testid="stSlider"] [data-testid="stThumbValue"] { color: #c9d1d9 !important; }
+
+  /* Tabs */
+  button[data-baseweb="tab"] {
+    color: #8b949e !important;
+    background-color: transparent !important;
+    border-bottom: 2px solid transparent !important;
+  }
+  button[data-baseweb="tab"][aria-selected="true"] {
+    color: #58a6ff !important;
+    border-bottom-color: #58a6ff !important;
+  }
+  [data-baseweb="tab-panel"] { background-color: transparent !important; }
+
+  /* Multiselect tags */
+  [data-baseweb="tag"] {
+    background-color: rgba(88,166,255,0.15) !important;
+    color: #58a6ff !important;
+  }
+
+  /* JSON viewer */
+  [data-testid="stJson"] { background-color: #0d1117 !important; border: 1px solid #21262d !important; border-radius: 8px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -735,30 +1038,45 @@ def render_sidebar() -> Tuple[str, str]:
 
         st.markdown("---")
 
-        # API key notice
-        api_key = os.getenv("OPENAI_API_KEY", "")
-        if api_key:
-            st.markdown("""
-            <div class="sidebar-metric">
-              <div class="sidebar-metric-label">AI Mode</div>
-              <div class="sidebar-metric-value" style="color:#a78bfa;">🤖 Active</div>
+        # ── Rewrite Mode Selector ─────────────────────────────────────────
+        st.markdown("### 🤖 Rewrite Engine")
+
+        _groq_key   = bool(os.getenv("GROQ_API_KEY", "").strip())
+        _openai_key = bool(os.getenv("OPENAI_API_KEY", "").strip())
+        _has_ai_key = _groq_key or _openai_key
+
+        # If no API key is available: force Rule-Based and disable the radio
+        _ui_choice = st.radio(
+            "rewrite_mode_radio",
+            options=["🤖 AI Rewrite", "⚙️ Rule-Based"],
+            label_visibility="collapsed",
+            index=0 if _has_ai_key else 1,
+            disabled=not _has_ai_key,
+        )
+
+        # Map UI choice → internal mode
+        rewrite_mode = "🚀 Auto-Detect" if _ui_choice == "🤖 AI Rewrite" else "⚙️ Rule-Based"
+
+        # Status badges (shown only in AI mode)
+        if _has_ai_key and _ui_choice == "🤖 AI Rewrite":
+            def _badge(label, color, icon):
+                return (f'<span style="background:rgba({color},0.12);border:1px solid '
+                        f'rgba({color},0.35);color:rgb({color});border-radius:12px;'
+                        f'padding:0.15rem 0.55rem;font-size:0.73rem;font-weight:600;">'
+                        f'{icon} {label}</span>')
+
+            groq_badge   = _badge("Ready","52,211,153","✓") if _groq_key   else _badge("No Key","248,81,73","✗")
+            # openai_badge = _badge("Ready","52,211,153","✓") if _openai_key else _badge("No Key","248,81,73","✗")
+
+            st.markdown(f"""
+            <div style="font-size:0.78rem;line-height:2.2;color:#8b949e;margin-top:0.4rem;">
+              🤖 &nbsp;&nbsp;GPT-4o Open AI&nbsp;&nbsp;&nbsp;&nbsp;{groq_badge}<br>
+              
             </div>
             """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="sidebar-metric">
-              <div class="sidebar-metric-label">Rewrite Mode</div>
-              <div class="sidebar-metric-value" style="color:#58a6ff; font-size:1rem;">
-                ⚙️ Rule-Based
-              </div>
-            </div>
-            """, unsafe_allow_html=True)
-            with st.expander("🔑 Enable AI Rewrite"):
-                st.markdown(
-                    "Add `OPENAI_API_KEY=your-key` to the `.env` file in the project "
-                    "root and restart Streamlit to activate GPT-4o-powered rewriting.",
-                    help="The app works fully offline without an API key."
-                )
+
+        if not _has_ai_key:
+            st.warning("⚠️ No AI key found — will use Rule-Based fallback.")
 
         st.markdown("---")
         st.markdown("### 📊 Scoring Weights")
@@ -791,11 +1109,11 @@ def render_sidebar() -> Tuple[str, str]:
         st.markdown("---")
         st.markdown(
             "<div style='font-size:0.72rem; color:#6e7681; text-align:center;'>"
-            "ISTQB CTFL v4.0.1 §5.5 · IGS Hackathon 2024</div>",
+            "ISTQB CTFL v4.0.1 §5.5 · IGS Hackathon 2026</div>",
             unsafe_allow_html=True
         )
 
-    return input_mode, ""
+    return input_mode, rewrite_mode
 
 
 # ---------------------------------------------------------------------------
@@ -804,7 +1122,7 @@ def render_sidebar() -> Tuple[str, str]:
 
 def main() -> None:
     render_hero()
-    input_mode, _ = render_sidebar()
+    input_mode, rewrite_mode = render_sidebar()
 
     bug: Optional[BugReport] = None
 
@@ -828,7 +1146,7 @@ def main() -> None:
         bug_data = SAMPLE_BUGS[selected_idx]
 
         with st.expander("📄 View raw JSON", expanded=False):
-            st.json(bug_data)
+            st.code(json.dumps(bug_data, indent=2), language="json")
 
         try:
             bug = parse_bug_from_dict(bug_data)
@@ -931,7 +1249,7 @@ Search results take too long to load
 
         # Show parsed fields so user can verify extraction
         with st.expander("🔍 Parsed fields preview (verify before analysing)", expanded=False):
-            st.json({
+            st.code(json.dumps({
                 "id": bug.id,
                 "summary": bug.summary or "(empty)",
                 "description": bug.description or "(empty)",
@@ -945,7 +1263,7 @@ Search results take too long to load
                 ),
                 "severity": bug.severity or "(empty)",
                 "priority": bug.priority or "(empty)",
-            })
+            }, indent=2), language="json")
 
     # ── Action Button ─────────────────────────────────────────────────────────
     st.markdown("<br>", unsafe_allow_html=True)
@@ -968,7 +1286,7 @@ Search results take too long to load
     # ── Processing ────────────────────────────────────────────────────────────
     with st.spinner("🔄 Scoring and rewriting report…"):
         score_result: ScoreResult = score_bug_report(bug)
-        rewritten: RewrittenBug = rewrite_bug_report(bug)
+        rewritten: RewrittenBug = rewrite_bug_report(bug, mode=rewrite_mode)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 

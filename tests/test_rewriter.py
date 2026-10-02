@@ -428,14 +428,15 @@ class TestVagueLanguageDetector:
 
 class TestRewriteBugReportPublicAPI:
     def test_returns_rewritten_bug(self, complete_bug):
-        result = rewrite_bug_report(complete_bug)
+        result = rewrite_bug_report(complete_bug, mode="⚙️ Rule-Based")
         assert isinstance(result, RewrittenBug)
 
     def test_fallback_used_when_no_api_key(self, complete_bug):
-        """Without OPENAI_API_KEY set, rule-based path is taken."""
+        """Without any API keys set, rule-based path is taken."""
         with patch.dict(os.environ, {}, clear=True):
             os.environ.pop("OPENAI_API_KEY", None)
-            result = rewrite_bug_report(complete_bug)
+            os.environ.pop("GROQ_API_KEY", None)
+            result = rewrite_bug_report(complete_bug, mode="🚀 Auto-Detect")
         assert result.rewrite_source == RewriteSource.RULE_BASED
 
     def test_fallback_used_when_openai_import_fails(self, complete_bug):
@@ -449,7 +450,7 @@ class TestRewriteBugReportPublicAPI:
             return original_import(name, *args, **kwargs)
 
         with patch("builtins.__import__", side_effect=mock_import):
-            result = rewrite_bug_report(complete_bug)
+            result = rewrite_bug_report(complete_bug, mode="🔵 OpenAI GPT-4o")
 
         assert result.rewrite_source == RewriteSource.RULE_BASED
 
@@ -462,7 +463,7 @@ class TestRewriteBugReportPublicAPI:
 
         with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-fake-key"}):
             with patch.dict("sys.modules", {"openai": mock_openai}):
-                result = rewrite_bug_report(complete_bug)
+                result = rewrite_bug_report(complete_bug, mode="🔵 OpenAI GPT-4o")
 
         assert result.rewrite_source == RewriteSource.RULE_BASED
 
@@ -494,7 +495,7 @@ class TestRewriteBugReportPublicAPI:
 
         with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-fake-key"}):
             with patch.dict("sys.modules", {"openai": mock_openai}):
-                result = rewrite_bug_report(complete_bug)
+                result = rewrite_bug_report(complete_bug, mode="🔵 OpenAI GPT-4o")
 
         assert result.rewrite_source == RewriteSource.AI
         assert result.summary == ai_response_payload["summary"]
